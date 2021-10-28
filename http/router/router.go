@@ -25,7 +25,7 @@ func (r *Router) Group(relativePath string, handlers []gin.HandlerFunc, fn func(
 	if handlers == nil {
 		handlers = []gin.HandlerFunc{}
 	}
-	fn(&Router{g: r.g.Group(relativePath, handlers...)})
+	fn(&Router{g: r.g.Group(relativePath, handlers...), getDB: r.getDB})
 }
 
 type HandlerFunc func(ctx context.Context, c *gin.Context) error
