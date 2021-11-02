@@ -7,16 +7,44 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func Cors() gin.HandlerFunc {
+type CorsOption struct {
+	AllowOrigins []string
+	MaxAge       time.Duration
+}
+
+func Cors(option *CorsOption) gin.HandlerFunc {
+	var (
+		allowOrigins []string
+		maxAge       time.Duration
+	)
+
+	if option != nil {
+		allowOrigins = option.AllowOrigins
+
+		if option.MaxAge == 0 {
+			option.MaxAge = time.Hour * 12
+		}
+		maxAge = option.MaxAge
+	}
+
 	return cors.New(
 		cors.Config{
 			AllowOriginFunc: func(origin string) bool {
-				return true
+				if len(allowOrigins) == 0 {
+					return true
+				} else {
+					for _, allowOrigin := range allowOrigins {
+						if allowOrigin == origin {
+							return true
+						}
+					}
+					return false
+				}
 			},
 			AllowHeaders:     []string{"Origin", "Content-Length", "Content-Type", "X-Request-Id"},
 			AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "HEAD"},
 			AllowCredentials: true,
-			MaxAge:           12 * time.Hour,
+			MaxAge:           maxAge,
 		},
 	)
 }

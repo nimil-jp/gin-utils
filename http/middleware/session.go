@@ -2,13 +2,18 @@ package middleware
 
 import (
 	"net/http"
+	"time"
 
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-contrib/sessions/cookie"
 	"github.com/gin-gonic/gin"
 )
 
-func Session(name, secret string) gin.HandlerFunc {
+type SessionOption struct {
+	MaxAge time.Duration
+}
+
+func Session(name, secret string, option *SessionOption) gin.HandlerFunc {
 	var (
 		corsSecure   bool
 		corsSameSite http.SameSite
@@ -23,11 +28,17 @@ func Session(name, secret string) gin.HandlerFunc {
 		corsSameSite = http.SameSiteLaxMode
 	}
 
+	var maxAge = time.Hour * 24 * 365
+
+	if option != nil {
+		maxAge = option.MaxAge
+	}
+
 	store := cookie.NewStore([]byte(secret))
 	store.Options(
 		sessions.Options{
 			Path:     "/",
-			MaxAge:   60 * 60 * 24 * 365,
+			MaxAge:   int(maxAge),
 			Secure:   corsSecure,
 			HttpOnly: true,
 			SameSite: corsSameSite,
