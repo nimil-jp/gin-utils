@@ -13,7 +13,7 @@ type SessionOption struct {
 	MaxAge time.Duration
 }
 
-func Session(name, secret string, option *SessionOption) gin.HandlerFunc {
+func Session(name []string, secret string, option *SessionOption) gin.HandlerFunc {
 	var (
 		corsSecure   bool
 		corsSameSite http.SameSite
@@ -44,5 +44,5 @@ func Session(name, secret string, option *SessionOption) gin.HandlerFunc {
 			SameSite: corsSameSite,
 		},
 	)
-	return sessions.Sessions(name, store)
+	return sessions.SessionsMany(name, store)
 }
