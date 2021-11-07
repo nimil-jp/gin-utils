@@ -9,6 +9,7 @@ import (
 
 type Context interface {
 	RequestID() string
+	Authenticated() bool
 	UserID() uint
 
 	Validate(request interface{}) (ok bool)
@@ -42,6 +43,10 @@ func New(requestID string, userID uint, getDB func() *gorm.DB) Context {
 
 func (c ctx) RequestID() string {
 	return c.id
+}
+
+func (c ctx) Authenticated() bool {
+	return c.userID != 0
 }
 
 func (c ctx) UserID() uint {
