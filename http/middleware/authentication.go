@@ -8,7 +8,7 @@ import (
 	jwt "github.com/ken109/gin-jwt"
 )
 
-func Authentication(jwtRealm string, session string) gin.HandlerFunc {
+func UnAuth(jwtRealm string, session string) gin.HandlerFunc {
 	if session != "" {
 		return func(c *gin.Context) {
 			if c.GetHeader("Authorization") == "" {
@@ -19,9 +19,27 @@ func Authentication(jwtRealm string, session string) gin.HandlerFunc {
 				}
 			}
 
-			jwt.Verify(jwtRealm)(c)
+			jwt.TryVerify(jwtRealm)(c)
 		}
 	} else {
-		return jwt.Verify(jwtRealm)
+		return jwt.TryVerify(jwtRealm)
+	}
+}
+
+func Auth(jwtRealm string, session string) gin.HandlerFunc {
+	if session != "" {
+		return func(c *gin.Context) {
+			if c.GetHeader("Authorization") == "" {
+				session := sessions.DefaultMany(c, session)
+				token := session.Get("token")
+				if token, ok := token.(string); ok {
+					c.Request.Header.Set("Authorization", fmt.Sprintf("bearer %s", token))
+				}
+			}
+
+			jwt.MustVerify(jwtRealm)(c)
+		}
+	} else {
+		return jwt.MustVerify(jwtRealm)
 	}
 }
