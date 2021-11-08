@@ -44,5 +44,9 @@ func (e Expected) Error() string {
 // expected errors
 
 func NotFound() *Expected {
-	return NewExpected(http.StatusNotFound, "not found")
+	return NewExpected(http.StatusNotFound, "リソースが見つかりませんでした")
+}
+
+func Forbidden() *Expected {
+	return NewExpected(http.StatusForbidden, "リソースに対する権限がありません")
 }
