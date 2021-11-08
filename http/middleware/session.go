@@ -15,17 +15,20 @@ type SessionOption struct {
 
 func Session(name []string, secret string, option *SessionOption) gin.HandlerFunc {
 	var (
-		corsSecure   bool
-		corsSameSite http.SameSite
+		secure   bool
+		sameSite http.SameSite
 	)
 
 	switch gin.Mode() {
 	case gin.ReleaseMode:
-		corsSecure = true
-		corsSameSite = http.SameSiteStrictMode
+		secure = true
+		sameSite = http.SameSiteStrictMode
+	case gin.TestMode:
+		secure = true
+		sameSite = http.SameSiteNoneMode
 	case gin.DebugMode:
-		corsSecure = false
-		corsSameSite = http.SameSiteLaxMode
+		secure = false
+		sameSite = http.SameSiteLaxMode
 	}
 
 	var maxAge = time.Hour * 24 * 365
@@ -39,9 +42,9 @@ func Session(name []string, secret string, option *SessionOption) gin.HandlerFun
 		sessions.Options{
 			Path:     "/",
 			MaxAge:   int(maxAge),
-			Secure:   corsSecure,
+			Secure:   secure,
 			HttpOnly: true,
-			SameSite: corsSameSite,
+			SameSite: sameSite,
 		},
 	)
 	return sessions.SessionsMany(name, store)
