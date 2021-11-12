@@ -15,16 +15,15 @@ type CorsOption struct {
 func Cors(option *CorsOption) gin.HandlerFunc {
 	var (
 		allowOrigins []string
-		maxAge       time.Duration
+		maxAge       = time.Hour * 2
 	)
 
 	if option != nil {
 		allowOrigins = option.AllowOrigins
 
-		if option.MaxAge == 0 {
-			option.MaxAge = time.Hour * 12
+		if option.MaxAge != 0 {
+			maxAge = option.MaxAge
 		}
-		maxAge = option.MaxAge
 	}
 
 	return cors.New(
