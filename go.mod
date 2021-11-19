@@ -6,10 +6,12 @@ require (
 	github.com/gin-contrib/cors v1.3.1
 	github.com/gin-contrib/sessions v0.0.4
 	github.com/gin-gonic/gin v1.7.4
+	github.com/go-playground/assert/v2 v2.0.1
 	github.com/go-playground/locales v0.14.0
 	github.com/go-playground/universal-translator v0.18.0
 	github.com/go-playground/validator/v10 v10.9.0
 	github.com/google/uuid v1.3.0
+	github.com/iancoleman/strcase v0.2.0
 	github.com/ken109/gin-jwt v1.1.4
 	github.com/pkg/errors v0.9.1
 	go.uber.org/zap v1.19.1
@@ -47,4 +49,4 @@ require (
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 )
 
-replace github.com/go-playground/validator/v10 => github.com/ken109/validator/v10 v10.9.1-0.20211013123912-3fec5d90da71
+replace github.com/go-playground/validator/v10 => github.com/ken109/validator/v10 v10.9.1-0.20211113103440-ec8ebbbebe05

@@ -1,7 +1,10 @@
-package xerrors
+package errors
 
 import (
 	"encoding/json"
+	"regexp"
+
+	"github.com/iancoleman/strcase"
 
 	"github.com/nimil-jp/gin-utils/util"
 	"github.com/nimil-jp/gin-utils/validation"
@@ -13,18 +16,15 @@ type Validation struct {
 	errors map[string][]string
 }
 
-func NewValidation() *Validation {
-	return &Validation{errors: map[string][]string{}}
+func NewValidation() *Error {
+	return &Error{
+		kind:       KindValidation,
+		validation: &Validation{errors: map[string][]string{}},
+	}
 }
 
 func (verr Validation) MarshalJSON() ([]byte, error) {
-	return json.Marshal(
-		struct {
-			Errors map[string][]string `json:"errors"`
-		}{
-			Errors: verr.errors,
-		},
-	)
+	return json.Marshal(verr.errors)
 }
 
 func (verr *Validation) Add(fieldName string, message string) {
@@ -41,18 +41,21 @@ func (verr Validation) Error() string {
 	return string(b)
 }
 
-func (verr *Validation) Validate(request interface{}) (ok bool) {
+var getFieldPathRegex = regexp.MustCompile(`^[a-zA-Z]+\.(.+)`)
+
+func (verr *Validation) Validate(request interface{}) (invalid bool) {
 	err := validation.Validate().Struct(request)
 	if err != nil {
 		if _, ok := err.(*validator.InvalidValidationError); !ok {
 			for _, f := range err.(validator.ValidationErrors) {
-				verr.Add(util.SnakeCase(f.StructField()), f.Translate(validation.Translator()))
+				fieldPath := getFieldPathRegex.FindStringSubmatch(f.StructNamespace())
+				verr.Add(strcase.ToSnakeWithIgnore(fieldPath[1], "."), f.Translate(validation.Translator()))
 			}
 		}
 	}
-	return verr.IsInValid()
+	return verr.Invalid()
 }
 
-func (verr Validation) IsInValid() bool {
+func (verr Validation) Invalid() bool {
 	return len(verr.errors) > 0
 }

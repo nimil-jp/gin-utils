@@ -1,6 +1,7 @@
-package xerrors
+package errors
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 )
@@ -10,11 +11,26 @@ type Expected struct {
 	msg        string
 }
 
-func NewExpected(statusCode int, message string) *Expected {
+func NewExpected(statusCode int, message string) *Error {
 	if statusCode == 0 {
 		statusCode = http.StatusInternalServerError
 	}
-	return &Expected{statusCode: statusCode, msg: message}
+	return &Error{
+		kind:     KindExpected,
+		expected: &Expected{statusCode: statusCode, msg: message},
+	}
+}
+
+func (e Expected) Error() string {
+	return fmt.Sprintf("code=%d, msg=%s", e.statusCode, e.msg)
+}
+
+func (e Expected) MarshalJSON() ([]byte, error) {
+	return json.Marshal(struct {
+		Message string `json:"message"`
+	}{
+		Message: e.msg,
+	})
 }
 
 func (e Expected) StatusCode() int {
@@ -37,16 +53,12 @@ func (e Expected) StatusOk() bool {
 	return e.statusCode < 300
 }
 
-func (e Expected) Error() string {
-	return fmt.Sprintf("code=%d, msg=%s", e.statusCode, e.msg)
-}
-
 // expected errors
 
-func NotFound() *Expected {
+func NotFound() *Error {
 	return NewExpected(http.StatusNotFound, "リソースが見つかりませんでした")
 }
 
-func Forbidden() *Expected {
+func Forbidden() *Error {
 	return NewExpected(http.StatusForbidden, "リソースに対する権限がありません")
 }

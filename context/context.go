@@ -1,9 +1,8 @@
 package context
 
 import (
-	"github.com/nimil-jp/gin-utils/xerrors"
-
 	"github.com/google/uuid"
+	"github.com/nimil-jp/gin-utils/errors"
 	"gorm.io/gorm"
 )
 
@@ -23,7 +22,7 @@ type Context interface {
 
 type ctx struct {
 	id     string
-	verr   *xerrors.Validation
+	verr   *errors.Error
 	getDB  func() *gorm.DB
 	db     *gorm.DB
 	userID uint
@@ -35,7 +34,7 @@ func New(requestID string, userID uint, getDB func() *gorm.DB) Context {
 	}
 	return &ctx{
 		id:     requestID,
-		verr:   xerrors.NewValidation(),
+		verr:   errors.NewValidation(),
 		getDB:  getDB,
 		userID: userID,
 	}

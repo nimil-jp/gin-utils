@@ -1,14 +1,11 @@
 package router
 
 import (
-	"net/http"
-
 	"github.com/nimil-jp/gin-utils/context"
-	"github.com/nimil-jp/gin-utils/xerrors"
+	"github.com/nimil-jp/gin-utils/errors"
 
 	"github.com/gin-gonic/gin"
 	jwt "github.com/ken109/gin-jwt"
-	"github.com/pkg/errors"
 	"gorm.io/gorm"
 )
 
@@ -74,23 +71,13 @@ func (r *Router) wrapperFunc(handlerFunc HandlerFunc) gin.HandlerFunc {
 
 		if err != nil {
 			switch v := err.(type) {
-			case *xerrors.Expected:
-				if v.StatusOk() {
-					return
-				} else {
-					c.JSON(v.StatusCode(), v.Message())
-				}
-			case *xerrors.Validation:
-				c.JSON(http.StatusBadRequest, v)
+			case *errors.Error:
+				v.Response().Do(c, ctx.RequestID())
 			default:
-				if gin.Mode() == gin.DebugMode {
-					c.JSONP(http.StatusInternalServerError, map[string]string{"request_id": ctx.RequestID(), "error": v.Error()})
-				} else {
-					c.JSONP(http.StatusInternalServerError, map[string]string{"request_id": ctx.RequestID()})
-				}
+				errors.NewUnexpected(v).Response().Do(c, ctx.RequestID())
 			}
 
-			_ = c.Error(errors.Errorf("%+v", err))
+			_ = c.Error(err)
 		}
 	}
 }
