@@ -1,6 +1,9 @@
 package context
 
 import (
+	"fmt"
+
+	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/nimil-jp/gin-utils/errors"
 	"gorm.io/gorm"
@@ -9,7 +12,8 @@ import (
 type Context interface {
 	RequestID() string
 	Authenticated() bool
-	UserID() uint
+	UID() uint
+	FirebaseUID() string
 
 	Validate(request interface{}) (ok bool)
 	FieldError(fieldName string, message string)
@@ -21,22 +25,40 @@ type Context interface {
 }
 
 type ctx struct {
-	id     string
-	verr   *errors.Error
-	getDB  func() *gorm.DB
-	db     *gorm.DB
-	userID uint
+	id          string
+	verr        *errors.Error
+	getDB       func() *gorm.DB
+	db          *gorm.DB
+	uid         uint
+	firebaseUID string
 }
 
-func New(requestID string, userID uint, getDB func() *gorm.DB) Context {
+func New(appName string, c *gin.Context, getDB func() *gorm.DB) Context {
+	requestID := c.GetHeader("X-Request-Id")
 	if requestID == "" {
 		requestID = uuid.New().String()
 	}
+
+	firebaseUID := ""
+	firebaseUIDInterface, ok := c.Get("firebase_uid")
+	if ok {
+		firebaseUID = firebaseUIDInterface.(string)
+	}
+
+	var uid uint
+	claimsInterface, ok := c.Get("claims")
+	if ok {
+		if uidInterface, ok := claimsInterface.(map[string]interface{})[fmt.Sprintf("%s_id", appName)]; ok {
+			uid = uint(uidInterface.(float64))
+		}
+	}
+
 	return &ctx{
-		id:     requestID,
-		verr:   errors.NewValidation(),
-		getDB:  getDB,
-		userID: userID,
+		id:          requestID,
+		verr:        errors.NewValidation(),
+		getDB:       getDB,
+		uid:         uid,
+		firebaseUID: firebaseUID,
 	}
 }
 
@@ -45,9 +67,13 @@ func (c ctx) RequestID() string {
 }
 
 func (c ctx) Authenticated() bool {
-	return c.userID != 0
+	return c.firebaseUID != ""
 }
 
-func (c ctx) UserID() uint {
-	return c.userID
+func (c ctx) UID() uint {
+	return c.uid
+}
+
+func (c ctx) FirebaseUID() string {
+	return c.firebaseUID
 }
