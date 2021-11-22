@@ -49,7 +49,11 @@ func (verr *Validation) Validate(request interface{}) (invalid bool) {
 		if _, ok := err.(*validator.InvalidValidationError); !ok {
 			for _, f := range err.(validator.ValidationErrors) {
 				fieldPath := getFieldPathRegex.FindStringSubmatch(f.StructNamespace())
-				verr.Add(strcase.ToSnakeWithIgnore(fieldPath[1], "."), f.Translate(validation.Translator()))
+				if len(fieldPath) > 0 {
+					verr.Add(strcase.ToSnakeWithIgnore(fieldPath[1], "."), f.Translate(validation.Translator()))
+				} else {
+					verr.Add(strcase.ToSnakeWithIgnore(f.StructField(), "."), f.Translate(validation.Translator()))
+				}
 			}
 		}
 	}
