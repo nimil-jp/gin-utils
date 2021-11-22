@@ -1,8 +1,8 @@
 package middleware
 
 import (
+	"fmt"
 	"net"
-	"net/http"
 	"net/http/httputil"
 	"os"
 	"runtime/debug"
@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/nimil-jp/gin-utils/errors"
 	"go.uber.org/zap"
 )
 
@@ -105,7 +106,8 @@ func RecoveryWithLog(logger *zap.Logger, stack bool) gin.HandlerFunc {
 						zap.String("request", string(httpRequest)),
 					)
 				}
-				c.AbortWithStatus(http.StatusInternalServerError)
+
+				errors.NewUnexpected(fmt.Errorf("%+v", err)).Response().Do(c, c.Writer.Header().Get("X-Request-Id"))
 			}
 		}()
 		c.Next()
