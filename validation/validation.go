@@ -3,12 +3,11 @@ package validation
 import (
 	"reflect"
 
-	"github.com/nimil-jp/gin-utils/util"
-
 	"github.com/go-playground/locales/ja"
 	ut "github.com/go-playground/universal-translator"
 	"github.com/go-playground/validator/v10"
 	jaTranslations "github.com/go-playground/validator/v10/translations/ja"
+	"github.com/nimil-jp/gin-utils/util"
 )
 
 var (
@@ -25,17 +24,6 @@ func init() {
 	translator, _ = uni.GetTranslator("ja")
 
 	_ = jaTranslations.RegisterDefaultTranslations(validate, translator)
-
-	validate.RegisterTagNameFunc(
-		func(fld reflect.StructField) string {
-			if value, ok := values[util.SnakeCase(fld.Name)]; ok {
-				return value
-			}
-			return util.SnakeCase(fld.Name)
-		},
-	)
-
-	registerAll()
 }
 
 func Validate() *validator.Validate {
@@ -46,12 +34,12 @@ func Translator() ut.Translator {
 	return translator
 }
 
-func register(tag string, fn validator.Func, translation string) {
+func Register(tag string, fn validator.Func, translation string) {
 	_ = validate.RegisterValidation(tag, fn)
-	registerTrans(tag, translation)
+	RegisterTrans(tag, translation)
 }
 
-func registerTrans(tag string, translation string) {
+func RegisterTrans(tag string, translation string) {
 	registrationFunc := func(tag string, translation string, override bool) validator.RegisterTranslationsFunc {
 		return func(ut ut.Translator) (err error) {
 			if err = ut.Add(tag, translation, override); err != nil {
@@ -69,4 +57,15 @@ func registerTrans(tag string, translation string) {
 		return t
 	}
 	_ = validate.RegisterTranslation(tag, translator, registrationFunc(tag, translation, true), translateFunc)
+}
+
+func RegisterFieldTrans(values map[string]string) {
+	validate.RegisterTagNameFunc(
+		func(fld reflect.StructField) string {
+			if value, ok := values[util.SnakeCase(fld.Name)]; ok {
+				return value
+			}
+			return util.SnakeCase(fld.Name)
+		},
+	)
 }
