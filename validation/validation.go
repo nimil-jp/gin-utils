@@ -34,29 +34,51 @@ func Translator() ut.Translator {
 	return translator
 }
 
-func Register(tag string, fn validator.Func, translation string) {
+func Register(tag string, fn validator.Func, translation string, option *RegisterTransOption) {
 	_ = validate.RegisterValidation(tag, fn)
-	RegisterTrans(tag, translation)
+	RegisterTrans(tag, translation, option)
 }
 
-func RegisterTrans(tag string, translation string) {
-	registrationFunc := func(tag string, translation string, override bool) validator.RegisterTranslationsFunc {
-		return func(ut ut.Translator) (err error) {
-			if err = ut.Add(tag, translation, override); err != nil {
-				return
-			}
-			return
+type RegisterTransOption struct {
+	CustomRegisTag  string
+	CustomRegisFunc func(ut ut.Translator) (err error)
+	CustomTransFunc func(ut ut.Translator, fe validator.FieldError) []string
+}
+
+func RegisterTrans(tag string, translation string, option *RegisterTransOption) {
+	regisTag := tag
+	if option != nil && option.CustomRegisTag != "" {
+		regisTag = option.CustomRegisTag
+	}
+
+	registrationFunc := func(ut ut.Translator) (err error) {
+		if err = ut.Add(regisTag, translation, true); err != nil {
+			panic(err)
 		}
+
+		if option != nil && option.CustomRegisFunc != nil {
+			if err = option.CustomRegisFunc(ut); err != nil {
+				panic(err)
+			}
+		}
+
+		return
 	}
 
 	translateFunc := func(ut ut.Translator, fe validator.FieldError) string {
-		t, err := ut.T(fe.ActualTag(), fe.Field())
+		params := []string{fe.Field()}
+
+		if option != nil && option.CustomTransFunc != nil {
+			params = append(params, option.CustomTransFunc(ut, fe)...)
+		}
+
+		t, err := ut.T(fe.ActualTag(), params...)
 		if err != nil {
 			return "入力された値が正しくありません。"
 		}
 		return t
 	}
-	_ = validate.RegisterTranslation(tag, translator, registrationFunc(tag, translation, true), translateFunc)
+	_ = validate.RegisterTranslation(tag, translator, registrationFunc, translateFunc)
 }
 
 func RegisterFieldTrans(values map[string]string) {

@@ -1,6 +1,6 @@
 package context
 
-func (c *ctx) Validate(request interface{}) (ok bool) {
+func (c *ctx) Validate(request interface{}) (invalid bool) {
 	return c.verr.Validation().Validate(request)
 }
 

@@ -15,7 +15,7 @@ type Context interface {
 	UID() uint
 	FirebaseUID() string
 
-	Validate(request interface{}) (ok bool)
+	Validate(request interface{}) (invalid bool)
 	FieldError(fieldName string, message string)
 	IsInValid() bool
 	ValidationError() error
