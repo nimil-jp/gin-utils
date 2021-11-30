@@ -9,9 +9,13 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-var firebaseAuthClient *auth.Client
+type FirebaseIDTokenVerifier interface {
+	VerifyIDToken(ctx context.Context, idToken string) (*auth.Token, error)
+}
 
-func FirebaseSetup(client *auth.Client) {
+var firebaseAuthClient FirebaseIDTokenVerifier
+
+func FirebaseSetup(client FirebaseIDTokenVerifier) {
 	firebaseAuthClient = client
 }
 
